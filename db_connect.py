@@ -1,7 +1,7 @@
 import psycopg2
 from psycopg2.extras import NamedTupleCursor
-from typing import List, Optional, Dict, Literal, Tuple
-from classes import Priority, Task, Developer, Project, Note
+from typing import List
+from classes import Task, Developer, Project, Note
 
 
 def connect_sql():
@@ -20,6 +20,21 @@ def connect_sql():
     return conn
 
 
+def run_sql(sql_request, cursorF=None, isFetching=True):
+    conn = connect_sql()
+    cursor = conn.cursor(cursor_factory=cursorF)
+    cursor.execute(sql_request)
+    conn.commit()
+    if isFetching:
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+    cursor.close()
+    conn.close()
+    return "Done"
+
+
 def find_table(sql_request):
     conn = connect_sql()
 
@@ -32,9 +47,10 @@ def find_table(sql_request):
 
     table_cursor = conn.cursor()
     table_cursor.execute(
-        "SELECT table_name FROM information_schema.tables \
-        WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')\
-        ORDER BY table_schema, table_name;"
+        """
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
+        ORDER BY table_schema, table_name;"""
     )
     tables = table_cursor.fetchall()
     table_names = [name[0] for name in tables]
@@ -49,20 +65,19 @@ def find_table(sql_request):
     return table_class[curr_table]
 
 
-# FIXME: don't forget to add async support for database operations in the future
 def get_data(sql_request: str) -> List:
     conn = connect_sql()
-    all_tasks = []
+    all_obj = []
     cursor = conn.cursor(cursor_factory=NamedTupleCursor)
     cursor.execute(sql_request)
     rows = cursor.fetchall()
 
     for row in rows:
-        all_tasks.append(find_table(sql_request)(**row._asdict()))
+        all_obj.append(find_table(sql_request)(**row._asdict()))
     cursor.close()
     conn.close()
-    return all_tasks
+    return all_obj
 
 
 if __name__ == "__main__":
-    get_data("SELECT * FROM tasks")
+    print(get_data("SELECT * FROM tasks;"))
