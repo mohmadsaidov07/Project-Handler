@@ -1,12 +1,12 @@
 from fastapi import FastAPI
-from routers import developers, projects, notes, tasks
+from routers import employee, projects, notes, tasks
 
 app = FastAPI()
 
-app.include_router(developers.router)
-app.include_router(projects.router)
-app.include_router(notes.router)
-app.include_router(tasks.router)
+app.include_router(employee.router)
+# app.include_router(projects.router)
+# app.include_router(notes.router)
+# app.include_router(tasks.router)
 
 
 @app.get("/")
