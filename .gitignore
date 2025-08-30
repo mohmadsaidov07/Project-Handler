@@ -7,3 +7,5 @@ venv/
 
 # Python cache
 __pycache__/
+
+.mypy_cache/
