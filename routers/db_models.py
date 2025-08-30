@@ -2,7 +2,7 @@ from typing import Annotated, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, text
 import datetime
-from db_setup import Base
+from .db_setup import Base
 import enum
 
 intpk = Annotated[int, mapped_column(primary_key=True)]

@@ -1,4 +1,4 @@
-from db_models import Task, Project, Employee, Note, Priority, TasksEmployees
+from .db_models import Task, Project, Employee, Note, Priority, TasksEmployees
 from datetime import datetime
 
 projects = [

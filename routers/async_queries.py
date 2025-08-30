@@ -1,8 +1,8 @@
 from sqlalchemy import select, delete, and_, insert
 from sqlalchemy.orm import selectinload, joinedload, aliased
-from db_models import Task, Note, Employee, Project, TasksEmployees
+from .db_models import Task, Note, Employee, Project, TasksEmployees
 from models import EmployeeDTO
-from db_setup import (
+from .db_setup import (
     async_session_factory,
     async_engine,
     sync_engine,
@@ -10,14 +10,14 @@ from db_setup import (
     Base,
 )
 import asyncio
-from test_data import projects, tasks, employees, notes, tasks_employees
+from .test_data import projects, tasks, employees, notes, tasks_employees
 from typing import List, Dict, Sequence, Tuple, no_type_check, Optional
 
 
 async def create_tables() -> None:
     async_engine.echo = False
     async with async_engine.begin() as conn:
-        await conn.run_sysnc(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     async_engine.echo = True
 
@@ -39,7 +39,7 @@ EMPLOYEES TABLE MANIPULATION
 """
 
 
-async def get_employees(from_id: int = 0, shown_amount: int = 5) -> Sequence[Employee]:
+async def get_employees(from_id: int = 0, shown_amount: int = 5) -> List[EmployeeDTO]:
     async with async_session_factory() as session:
         res = await session.scalars(
             select(Employee)
@@ -49,19 +49,19 @@ async def get_employees(from_id: int = 0, shown_amount: int = 5) -> Sequence[Emp
         )
         employees = res.all()
         employees_json = [
-            EmployeeDTO.model_validate(employee, from_attributes=True)
-            for employee in employees
+            EmployeeDTO.model_validate(employee) for employee in employees
         ]
         for employee_json in employees_json:
             print(employee_json)
-        return employees
+        return employees_json
 
 
-async def get_employee(employee_id: int) -> Employee | None:
+async def get_employee(employee_id: int) -> EmployeeDTO | None:
     async with async_session_factory() as session:
         result_employee = await session.get(Employee, employee_id)
-        print(result_employee)
-        return result_employee
+        employee_json = EmployeeDTO.model_validate(result_employee)
+        print(employee_json)
+        return employee_json
 
 
 @no_type_check
@@ -133,12 +133,12 @@ async def update_employee(
         return prev_person
 
 
-async def main():
-    # await create_tables()
-    # await insert_data()
-    # await create_employee("Patrick", "Bateman", 1_000_000, 1)
-    # await update_employee(84, salary=999_999)
-    await get_employees(80)
+# async def main():
+#     # await create_tables()
+#     # await insert_data()
+#     # await create_employee("Patrick", "Bateman", 1_000_000, 1)
+#     # await update_employee(84, salary=999_999)
+#     await get_employees(80)
 
 
-asyncio.run(main())
+# asyncio.run(main())

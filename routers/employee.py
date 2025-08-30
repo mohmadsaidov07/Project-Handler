@@ -115,20 +115,21 @@
 
 
 """
+
 Wayyy before
 
 Before
-
 
 """
 
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict
 
-# from models import Employee, CreateEmployee, UpdateEmployee
+from models import EmployeeDTO, CreateEmployeeDTO, UpdateEmployeeDTO, NoteDTO
+
 # from db_connect import get_data, connect_sql
 # from psycopg2.extras import NamedTupleCursor
-from .async_queries import get_employees
+from .async_queries import get_employees, get_employee
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 # all_employees: List[Employee] = get_data("SELECT * FROM employees;")
@@ -138,31 +139,25 @@ router = APIRouter(prefix="/employees", tags=["employees"])
 #     return max(getattr(obj, id_columnName) for obj in objects_list)
 
 
-@router.get("/")  # response_model=List[Employee])
-async def get_all_employees():  # -> List[Employee]:
-    return get_employees()
+@router.get("/", response_model=List[EmployeeDTO])
+async def get_all_employees() -> List[EmployeeDTO]:
+    return await get_employees(shown_amount=99999)
 
 
-# @router.get("/{employee_id}", response_model=Employee)
-# def get_employee(employee_id: int) -> Employee:
-#     for employee in all_employees:
-#         if Employee.id == employee_id:
-#             return employee
-#     raise HTTPException(
-#         status_code=404, detail=f"There is no employee with id:{employee_id}"
-#     )
+@router.get("/{employee_id}", response_model=EmployeeDTO)
+async def get_one_employee(employee_id: int) -> EmployeeDTO:
+    res = await get_employee(employee_id)
+    if res is not None:
+        return res
+    else:
+        raise HTTPException(
+            status_code=404, detail=f"There's no employee with id:{employee_id}"
+        )
 
 
-# @router.get("/notes/", response_model=List[Dict])
-# def employeeNotes() -> List[Dict]:
-#     conn = connect_sql()
-#     cursor = conn.cursor(cursor_factory=NamedTupleCursor)
-#     cursor.execute(
-#         "SELECT DISTINCT d.employee_id, first_name, last_name, position FROM employees d\
-#          JOIN notes n ON n.employee_id = d.employee_id ORDER BY d.employee_id;"
-#     )
-#     rows = cursor.fetchall()
-#     return [dict(**row._asdict()) for row in rows]
+# @router.get("/notes/", response_model=List[EmployeeDTO])
+# def employeeNotes() -> List[EmployeeDTO]:
+#     pass
 
 
 # @router.post("/", response_model=CreateEmployee)
