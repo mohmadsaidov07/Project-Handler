@@ -122,14 +122,25 @@ Before
 
 """
 
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict
 
-from models import EmployeeDTO, CreateEmployeeDTO, UpdateEmployeeDTO, NoteDTO
+from models import (
+    EmployeeSchema,
+    UpdateEmployeeSchema,
+    NoteSchema,
+    EmployeeRelSchema,
+    EmployeeBase,
+)
 
 # from db_connect import get_data, connect_sql
 # from psycopg2.extras import NamedTupleCursor
-from .async_queries import get_employees, get_employee
+from db_conn.async_queries import get_employees, get_employee, create_employee
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 # all_employees: List[Employee] = get_data("SELECT * FROM employees;")
@@ -139,13 +150,13 @@ router = APIRouter(prefix="/employees", tags=["employees"])
 #     return max(getattr(obj, id_columnName) for obj in objects_list)
 
 
-@router.get("/", response_model=List[EmployeeDTO])
-async def get_all_employees() -> List[EmployeeDTO]:
-    return await get_employees(shown_amount=99999)
+@router.get("/", response_model=List[EmployeeSchema])
+async def get_employees_handle(skip: int = 0, limit: int = 5) -> List[EmployeeSchema]:
+    return await get_employees(skip, limit)
 
 
-@router.get("/{employee_id}", response_model=EmployeeDTO)
-async def get_one_employee(employee_id: int) -> EmployeeDTO:
+@router.get("/{employee_id}", response_model=EmployeeRelSchema)
+async def get_employee_handle(employee_id: int) -> EmployeeRelSchema:
     res = await get_employee(employee_id)
     if res is not None:
         return res
@@ -155,32 +166,18 @@ async def get_one_employee(employee_id: int) -> EmployeeDTO:
         )
 
 
-# @router.get("/notes/", response_model=List[EmployeeDTO])
-# def employeeNotes() -> List[EmployeeDTO]:
-#     pass
-
-
-# @router.post("/", response_model=CreateEmployee)
-# def create_employee(
-#     employee: CreateEmployee, project_id: int, employee_id=None
-# ) -> CreateEmployee:
-#     conn = connect_sql()
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         f"""
-#         INSERT INTO employees({"employee_id, " if employee_id is not None else ""}first_name, last_name, position, salary, is_working)
-#             VALUES({f"{employee_id}, " if employee_id is not None else ""}, {", ".join(repr(getattr(employee, attr)) for attr in employee.__dict__.keys())});
-
-#         INSERT INTO project_employees(project_id, employee_id)
-#             VALUES({project_id}, {new_id(employees, "employee_id") if employee_id is None else employee_id});"""
-#     )
-#     cursor.execute(
-#         "SELECT setval('employees_employee_id_seq', (SELECT MAX(employee_id) FROM employees))"
-#     )
-#     conn.commit()
-#     cursor.close()
-#     conn.close()
-#     return employee
+@router.post("/", response_model=EmployeeBase)
+async def create_employee_handle(
+    first_name: str | None = None,
+    last_name: str | None = None,
+    salary: int = 0,
+    is_working: bool = True,
+) -> EmployeeBase:
+    employee = await create_employee(
+        first_name=first_name, last_name=last_name, salary=salary, is_working=is_working
+    )
+    print(employee)
+    return employee
 
 
 # @router.delete("/", response_model=Employee)

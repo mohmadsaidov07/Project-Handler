@@ -1,11 +1,22 @@
-# Virtual environment
-.venv/
-venv/
-
-# Environment variables
-.env
-
-# Python cache
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
 
+# Mypy
 .mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,7 +1,7 @@
-from sqlalchemy import select, delete, and_, insert
+from sqlalchemy import select, func, Integer, label
 from sqlalchemy.orm import selectinload, joinedload, aliased
 from .db_models import Task, Note, Employee, Project, TasksEmployees
-from models import EmployeeDTO
+from models import EmployeeSchema, TaskSchema, NoteSchema, EmployeeRelSchema
 from .db_setup import (
     async_session_factory,
     async_engine,
@@ -11,7 +11,8 @@ from .db_setup import (
 )
 import asyncio
 from .test_data import projects, tasks, employees, notes, tasks_employees
-from typing import List, Dict, Sequence, Tuple, no_type_check, Optional
+from typing import List, Dict, Sequence, Tuple, no_type_check, Optional, Any
+from fastapi import HTTPException
 
 
 async def create_tables() -> None:
@@ -39,40 +40,39 @@ EMPLOYEES TABLE MANIPULATION
 """
 
 
-async def get_employees(from_id: int = 0, shown_amount: int = 5) -> List[EmployeeDTO]:
+async def get_employees(skip: int = 0, limit: int = 5) -> List[EmployeeSchema]:
     async with async_session_factory() as session:
+        e = aliased(Employee)
         res = await session.scalars(
-            select(Employee)
-            .where(Employee.id >= from_id)
-            .limit(shown_amount)
-            .order_by(Employee.id)
+            select(e).where(e.id >= skip).limit(limit).order_by(e.id)
         )
         employees = res.all()
         employees_json = [
-            EmployeeDTO.model_validate(employee) for employee in employees
+            EmployeeSchema.model_validate(employee) for employee in employees
         ]
         for employee_json in employees_json:
             print(employee_json)
         return employees_json
 
 
-async def get_employee(employee_id: int) -> EmployeeDTO | None:
-    async with async_session_factory() as session:
-        result_employee = await session.get(Employee, employee_id)
-        employee_json = EmployeeDTO.model_validate(result_employee)
-        print(employee_json)
-        return employee_json
-
-
-@no_type_check
-async def get_employee_notes(employee_id: int) -> Tuple[Employee, List[Note] | []]:
+async def get_employee(employee_id: int) -> EmployeeRelSchema:
     async with async_session_factory() as session:
         employee = await session.get(
-            Employee, employee_id, options=[selectinload(Employee.employee_notes)]
+            Employee,
+            employee_id,
+            options=(
+                selectinload(Employee.employee_tasks),
+                selectinload(Employee.employee_notes),
+            ),
         )
-        if employee is not None:
-            print(f"{employee} -> {employee.employee_notes}")
-            return (employee, employee.employee_notes)
+        if employee is None:
+            raise HTTPException(
+                status_code=418,
+                detail=f"Sry you're a teapot, there's no user with id {employee_id}",
+            )
+        res = EmployeeRelSchema.model_validate(employee)
+        print(res)
+        return res
 
 
 async def delete_employee(employee_id: int) -> bool:
@@ -110,7 +110,7 @@ async def update_employee(
     last_name: Optional[str] = None,
     salary: Optional[int] = None,
     is_working: Optional[bool] = None,
-):
+) -> Employee:
     async with async_session_factory() as session:
         prev_person = await session.get(Employee, update_id)
         if prev_person is None:
@@ -133,12 +133,39 @@ async def update_employee(
         return prev_person
 
 
+async def project_avg_salary() -> List[Dict[str, Any]]:
+    async with async_session_factory() as session:
+        t = aliased(Task)
+        p = aliased(Project)
+        subquery = (
+            select(
+                t.project_id.label("project_id"),
+                func.avg(Employee.salary).cast(Integer).label("project_avg_salary"),
+            )
+            .join(t.task_employees)
+            .group_by(t.project_id)
+            .order_by(t.project_id)
+            .subquery()
+        )
+
+        query = select(p.id, p.project_name, subquery.c.project_avg_salary).join(
+            p, p.id == subquery.c.project_id
+        )
+
+        res = await session.execute(query)
+        res_dict = []
+        for row in res:
+            print(row._asdict())
+            res_dict.append(row._asdict())
+        return res_dict
+
+
 # async def main():
 #     # await create_tables()
 #     # await insert_data()
 #     # await create_employee("Patrick", "Bateman", 1_000_000, 1)
 #     # await update_employee(84, salary=999_999)
-#     await get_employees(80)
+#     await project_avg_salary()
 
 
 # asyncio.run(main())

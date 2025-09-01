@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 import datetime
-from typing import Optional, Literal
+from typing import Optional, List
 
 from enum import IntEnum
 
@@ -18,38 +18,21 @@ class TaskBase(BaseModel):
     priority: Priority = Field(
         default=Priority.low_priority, description="Task priority"
     )
-    project_id: int = Field(
-        ..., gt=0, description="Reference to a project that this task belogns to"
-    )
-
-    @validator("project_id")
-    def validate_project_(cls, v):
-        if v <= 0:
-            raise ValueError("Project id must be greater than 0")
-        return v
+    project_id: int = Field(..., description="Project id that this task belongs to")
 
     class Config:
         from_attributes = True
 
 
-class TaskDTO(TaskBase):
+class TaskSchema(TaskBase):
     id: int = Field(..., description="Task unique identifier")
-
-
-class TaskDTORel(TaskDTO):
-    # task_employees: List["Employee"] = []
-
-    # task_project: "Project"] = relationship(back_populates="project_tasks")
-
-    # task_notes: List["Note"] = []
-    pass
 
 
 class EmployeeBase(BaseModel):
     first_name: str = Field(..., description="Employee's first name")
     last_name: str = Field(..., description="Employee's last name")
 
-    salary: int = Field(..., ge=0, description="Employee's salary")
+    salary: int = Field(..., description="Employee's salary")
     is_working: bool = Field(
         default=True, description="Status of Employee if he's working"
     )
@@ -58,7 +41,7 @@ class EmployeeBase(BaseModel):
         from_attributes = True
 
 
-class EmployeeDTO(EmployeeBase):
+class EmployeeSchema(EmployeeBase):
     id: int = Field(..., description="Employee unique identifier")
 
 
@@ -72,54 +55,58 @@ class ProjectBase(BaseModel):
         from_attributes = True
 
 
-class ProjectDTO(ProjectBase):
+class ProjectSchema(ProjectBase):
     project_id: int = Field(..., description="Project unique identifier")
 
 
 class NoteBase(BaseModel):
     note_info: str = Field(..., description="Note text")
     employee_id: int = Field(
-        ..., gt=0, description="The ID of the employee who wrote this note"
+        ..., description="The ID of the employee who wrote this note"
     )
-    task_id: int = Field(
-        ..., gt=0, description="The ID of the task this note belongs to."
-    )
+    task_id: int = Field(..., description="The ID of the task this note belongs to.")
 
     class Config:
         from_attributes = True
 
 
-class NoteDTO(NoteBase):
-    note_id: int = Field(..., description="Note unique identifier")
+class NoteSchema(NoteBase):
+    id: int = Field(..., description="Note unique identifier")
 
 
-# Creating classes
-class CreateProjectDTO(ProjectBase):
-    pass
+# Relations
 
 
-class CreateTaskDTO(TaskBase):
-    pass
+class ProjectRelSchema(ProjectSchema):
+    project_tasks: List["TaskSchema"] = []
 
 
-class CreateEmployeeDTO(EmployeeBase):
-    pass
+class TaskRelSchema(TaskSchema):
+    task_employees: List["EmployeeSchema"] = []
+    task_project: "ProjectSchema"
+    task_notes: List["NoteSchema"] = []
 
 
-class CreateNoteDTO(NoteBase):
-    pass
+class EmployeeRelSchema(EmployeeSchema):
+    employee_tasks: List["TaskSchema"] = []
+    employee_notes: List["NoteSchema"] = []
+
+
+class NoteRelSchema(NoteSchema):
+    note_task: "TaskSchema"
+    written_by: "EmployeeSchema"
 
 
 # Updating classes
 # FIXME: change attributes so they'll match their class
-class UpdateProjectDTO(BaseModel):
+class UpdateProjectSchema(BaseModel):
     project_name: Optional[str] = None
     start_date: Optional[datetime.datetime] = None
     end_date: Optional[datetime.datetime] = None
     is_completed: Optional[bool] = None
 
 
-class UpdateTaskDTO(BaseModel):
+class UpdateTaskSchema(BaseModel):
     task_description: Optional[str] = None
     start_date: Optional[datetime.datetime] = None
     end_date: Optional[datetime.datetime] = None
@@ -127,14 +114,14 @@ class UpdateTaskDTO(BaseModel):
     project_id: Optional[int] = None
 
 
-class UpdateEmployeeDTO(BaseModel):
+class UpdateEmployeeSchema(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     salary: Optional[int] = None
     is_working: Optional[bool] = None
 
 
-class UpdateNoteDTO(BaseModel):
+class UpdateNoteSchema(BaseModel):
     note_info: Optional[str] = None
     employee_id: Optional[int] = None
     task_id: Optional[int] = None
