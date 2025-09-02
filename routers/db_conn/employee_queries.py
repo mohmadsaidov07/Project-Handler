@@ -1,7 +1,13 @@
 from sqlalchemy import select, func, Integer, label
 from sqlalchemy.orm import selectinload, joinedload, aliased
 from .db_models import Task, Note, Employee, Project, TasksEmployees
-from models import EmployeeSchema, TaskSchema, NoteSchema, EmployeeRelSchema
+from schemas import (
+    EmployeeSchema,
+    TaskSchema,
+    NoteSchema,
+    EmployeeRelSchema,
+    UpdateEmployeeSchema,
+)
 from .db_setup import (
     async_session_factory,
     async_engine,
@@ -75,62 +81,71 @@ async def get_employee(employee_id: int) -> EmployeeRelSchema:
         return res
 
 
-async def delete_employee(employee_id: int) -> bool:
+async def delete_employee(employee_id: int) -> EmployeeSchema:
     async with async_session_factory() as session:
         employee = await session.get(Employee, employee_id)
-
         if employee is not None:
+            deleted_employee = EmployeeSchema.model_validate(employee)
             await session.delete(employee)
             await session.commit()
-            return True
-        return False
+            return deleted_employee
+        else:
+            raise HTTPException(
+                status_code=404, detail=f"Employee with id:{employee_id} not found!"
+            )
 
 
 async def create_employee(
     first_name: str, last_name: str, salary: int, is_working: bool = False
-) -> Employee:
+) -> EmployeeSchema:
     async with async_session_factory() as session:
         new_employee = Employee(
-            first_name=first_name,
-            last_name=last_name,
+            first_name=first_name.title().strip(),
+            last_name=last_name.title().strip(),
             salary=salary,
             is_working=is_working,
         )
         session.add(new_employee)
         await session.flush()
+        await session.refresh(new_employee)
         print(f"Added employee: {new_employee}")
+        employee_data = {
+            "id": new_employee.id,
+            "first_name": new_employee.first_name,
+            "last_name": new_employee.last_name,
+            "salary": new_employee.salary,
+            "is_working": bool(new_employee.is_working),
+        }
+        employee_json = EmployeeSchema.model_validate(employee_data)
+
         await session.commit()
 
-        return new_employee
+        return employee_json
 
 
 async def update_employee(
-    update_id: int,
-    first_name: Optional[str] = None,
-    last_name: Optional[str] = None,
-    salary: Optional[int] = None,
-    is_working: Optional[bool] = None,
-) -> Employee:
+    update_id: int, update_data: UpdateEmployeeSchema, partial: bool = False
+) -> EmployeeSchema:
     async with async_session_factory() as session:
-        prev_person = await session.get(Employee, update_id)
-        if prev_person is None:
-            raise ValueError(f"Employee with id:{update_id} not found")
+        prev_employee = await session.get(Employee, update_id)
+        if prev_employee is None:
+            raise HTTPException(
+                status_code=404, detail=f"Employee with id:{update_id} not found"
+            )
+        if not partial:
+            update_dict = update_data.model_dump()
+        else:
+            update_dict = update_data.model_dump(exclude_unset=True)
 
-        new_person = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "salary": salary,
-            "is_working": is_working,
-        }
+        for key, val in update_dict.items():
+            setattr(prev_employee, key, val)
 
-        for key, val in new_person.items():
-            if val is not None and val != getattr(prev_person, key):
-                setattr(prev_person, key, val)
         await session.commit()
+        await session.refresh(prev_employee)
 
-        await session.refresh(prev_person)
-        print(prev_person)
-        return prev_person
+        employee_json = EmployeeSchema.model_validate(prev_employee)
+        print(employee_json)
+        return employee_json
 
 
 async def project_avg_salary() -> List[Dict[str, Any]]:
