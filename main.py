@@ -1,18 +1,23 @@
 from fastapi import FastAPI
 from routers import employee, projects, notes, tasks
+import uvicorn
 
 
 app = FastAPI()
 
 app.include_router(employee.router)
-# app.include_router(projects.router)
-# app.include_router(notes.router)
-# app.include_router(tasks.router)
+app.include_router(projects.router)
+app.include_router(notes.router)
+app.include_router(tasks.router)
 
 
 @app.get("/")
 def read_root():
     return {"message": "Hello world"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app="main:app", reload=True)
 
 
 # TODO:Implement db with Orm such as sqlAlchemy,find a way to use websockets, and make a minimal frontend, then connect em together

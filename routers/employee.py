@@ -10,9 +10,10 @@ from schemas import (
     EmployeeSchema,
     UpdateEmployeeSchema,
     EmployeeRelSchema,
+    EmployeeBase,
 )
 
-from routers.db_conn.employee_queries import (
+from routers.db_conn.queries_package.employee_queries import (
     get_employees,
     get_employee,
     create_employee,
@@ -40,15 +41,8 @@ async def get_employee_handle(employee_id: int) -> EmployeeRelSchema:
 
 
 @router.post("/", response_model=EmployeeSchema)
-async def create_employee_handle(
-    first_name: str | None = None,
-    last_name: str | None = None,
-    salary: int = 0,
-    is_working: bool = True,
-) -> EmployeeSchema:
-    employee = await create_employee(
-        first_name=first_name, last_name=last_name, salary=salary, is_working=is_working
-    )
+async def create_employee_handle(data: EmployeeBase) -> EmployeeSchema:
+    employee = await create_employee(data)
     return employee
 
 
@@ -58,14 +52,14 @@ async def delete_employee_handle(employee_id: int) -> EmployeeSchema:
 
 
 @router.put("/{employee_id}", response_model=EmployeeSchema)
-async def replace_employee_handler(
+async def replace_employee_handle(
     employee_id: int, update_data: UpdateEmployeeSchema
 ) -> EmployeeSchema:
     return await update_employee(employee_id, update_data)
 
 
 @router.patch("/{employee_id}", response_model=EmployeeSchema)
-async def update_employee_handler(
+async def update_employee_handle(
     employee_id: int, update_data: UpdateEmployeeSchema
 ) -> EmployeeSchema:
     return await update_employee(employee_id, update_data, True)

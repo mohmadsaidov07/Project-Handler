@@ -1,11 +1,29 @@
-from pydantic import BaseModel, Field
-import datetime
-from typing import Optional, List
+from pydantic import BaseModel, Field, BeforeValidator
+from datetime import datetime
+from typing import Optional, List, Annotated
+import re
+import enum
 
-from enum import IntEnum
+DateString = Annotated[str, BeforeValidator(lambda x: validate_date_format(x))]
 
 
-class Priority(IntEnum):
+def validate_date_format(date_str: str) -> str:
+    if not isinstance(date_str, str):
+        raise ValueError("Date must be string")
+
+    pattern = r"^\d{4}-\d{2}-\d{2}$"
+    if not re.match(pattern=pattern, string=date_str):
+        raise ValueError("String must be formatted like YYYY-MM-DD")
+
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Invalid date")
+
+    return date_str
+
+
+class Priority(enum.Enum):
     high_priority = 3
     mid_priority = 2
     low_priority = 1
@@ -13,8 +31,8 @@ class Priority(IntEnum):
 
 class TaskBase(BaseModel):
     task_description: str = Field(..., description="Information about task")
-    start_date: datetime.datetime = Field(..., description="Task start date")
-    end_date: datetime.datetime = Field(..., description="Task end date")
+    start_date: DateString = Field(..., description="Date when task started")
+    end_date: DateString = Field(..., description="Date when task ended or will end")
     priority: Priority = Field(
         default=Priority.low_priority, description="Task priority"
     )
@@ -47,8 +65,8 @@ class EmployeeSchema(EmployeeBase):
 
 class ProjectBase(BaseModel):
     project_name: str = Field(..., description="Name of the project")
-    start_date: datetime.datetime = Field(..., description="date when project started")
-    end_date: datetime.datetime = Field(..., description="date when project ended")
+    start_date: DateString = Field(..., description="date when project started")
+    end_date: DateString = Field(..., description="date when project ended")
     is_completed: bool = Field(default=False, description="status of completion")
 
     class Config:
@@ -56,7 +74,7 @@ class ProjectBase(BaseModel):
 
 
 class ProjectSchema(ProjectBase):
-    project_id: int = Field(..., description="Project unique identifier")
+    id: int = Field(..., description="Project unique identifier")
 
 
 class NoteBase(BaseModel):
@@ -101,16 +119,16 @@ class NoteRelSchema(NoteSchema):
 # FIXME: change attributes so they'll match their class
 class UpdateProjectSchema(BaseModel):
     project_name: Optional[str] = None
-    start_date: Optional[datetime.datetime] = None
-    end_date: Optional[datetime.datetime] = None
+    start_date: Optional[DateString] = None
+    end_date: Optional[DateString] = None
     is_completed: Optional[bool] = None
 
 
 class UpdateTaskSchema(BaseModel):
     task_description: Optional[str] = None
-    start_date: Optional[datetime.datetime] = None
-    end_date: Optional[datetime.datetime] = None
-    priority: Optional[int] = None
+    start_date: Optional[DateString] = None
+    end_date: Optional[DateString] = None
+    priority: Optional[Priority] = None
     project_id: Optional[int] = None
 
 

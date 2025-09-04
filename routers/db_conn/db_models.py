@@ -1,18 +1,20 @@
 from typing import Annotated, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, text
+from sqlalchemy import ForeignKey
 import datetime
 from .db_setup import Base
 import enum
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
-start_date = Annotated[
-    datetime.datetime, mapped_column(server_default=text("TIMEZONE ('utc', now())"))
+DateStr = Annotated[
+    str,
+    mapped_column(
+        server_default=datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
+    ),
 ]
-end_date = Annotated[datetime.datetime, mapped_column(default=None, nullable=True)]
 
 
-class Priority(enum.Enum):
+class Priority(enum.IntEnum):
     high_priority = 3
     mid_priority = 2
     low_priority = 1
@@ -23,8 +25,8 @@ class Task(Base):
 
     id: Mapped[intpk]
     task_description: Mapped[str]
-    start_date: Mapped[start_date]
-    end_date: Mapped[end_date]
+    start_date: Mapped[DateStr]
+    end_date: Mapped[DateStr]
     priority: Mapped[Priority] = mapped_column(default=Priority.low_priority)
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE")
@@ -78,8 +80,8 @@ class Project(Base):
     id: Mapped[intpk]
 
     project_name: Mapped[str]
-    start_date: Mapped[start_date]
-    end_date: Mapped[end_date]
+    start_date: Mapped[DateStr]
+    end_date: Mapped[DateStr]
     is_completed: Mapped[bool] = mapped_column(default=False)
 
     project_tasks: Mapped[List["Task"]] = relationship(
