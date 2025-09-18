@@ -1,6 +1,7 @@
 from sqlalchemy import select, func, Integer
 from sqlalchemy.orm import selectinload, joinedload, aliased
-from ..db_models import Task, Note, Employee, Project
+from sqlalchemy.ext.asyncio import AsyncSession
+from ..db_models import Task, Note, Employee, Project, TaskEmployees
 from schemas import (
     TaskBase,
     TaskSchema,
@@ -18,31 +19,30 @@ from schemas import (
     UpdateTaskSchema,
     UpdateEmployeeSchema,
     UpdateNoteSchema,
+    TaskEmployeeSchema,
 )
 from ..db_setup import async_session_factory, async_engine, Base
-from ..test_data import projects, tasks, employees, notes, tasks_employees
-from typing import List, Any, Dict
-from fastapi import HTTPException
+from typing import List, Any, Dict, Annotated
+from fastapi import HTTPException, Depends, Request
 import asyncio
+from pydantic import Field, BaseModel
+import json
+import aiofiles
 
 
-async def create_tables() -> None:
-    async_engine.echo = False
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    async_engine.echo = True
-
-
-async def insert_data() -> None:
-    async_engine.echo = False
+async def get_session():
     async with async_session_factory() as session:
-        session.add_all([*projects, *tasks, *employees])
-        await session.flush()
-        session.add_all([*notes, *tasks_employees])
-        await session.commit()
-    async_engine.echo = True
+        yield session
 
+
+class PaginationParamsGetMany(BaseModel):
+    skip: int = Field(default=0, ge=0, description="Amount of rows you wanna skip")
+    limit: int = Field(
+        default=3, ge=0, le=100, description="Amount of rows you wanna get"
+    )
+
+
+PaginationDep_get = Annotated[PaginationParamsGetMany, Depends()]
 
 __all__ = [
     # schemas
@@ -69,28 +69,30 @@ __all__ = [
     "selectinload",
     "joinedload",
     "aliased",
+    "AsyncSession",
     # Models
     "Task",
     "Note",
     "Employee",
     "Project",
+    "TaskEmployees",
+    "TaskEmployeeSchema",
     # Database
     "async_session_factory",
     "async_engine",
     "Base",
-    # Test data
-    "projects",
-    "tasks",
-    "employees",
-    "notes",
-    "tasks_employees",
     # Typing & built-ins
     "List",
     "Any",
     "Dict",
     "HTTPException",
+    "Request",
+    "Depends",
     "asyncio",
+    "json",
+    "aiofiles",
+    "Annotated",
     # My func's
-    "create_tables",
-    "insert_data",
+    "get_session",
+    "PaginationDep_get",
 ]

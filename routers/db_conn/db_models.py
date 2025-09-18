@@ -64,7 +64,7 @@ class Employee(Base):
     )
 
 
-class TasksEmployees(Base):
+class TaskEmployees(Base):
     __tablename__ = "tasks_employees"
 
     task_id: Mapped[int] = mapped_column(

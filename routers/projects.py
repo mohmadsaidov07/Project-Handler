@@ -1,23 +1,16 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Any
+from fastapi import APIRouter, Depends
+from typing import List, Dict, Any, Annotated
 
 from schemas import (
-    ProjectBase,
     ProjectSchema,
-    UpdateProjectSchema,
     ProjectRelSchema,
 )
 
 from routers.db_conn.queries_package.project_queries import (
     get_projects,
     get_project,
-    create_project,
-    delete_project,
+    create_projects,
+    delete_projects,
     update_project,
     project_avg_salary,
 )
@@ -26,46 +19,49 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 @router.get("/", response_model=List[ProjectSchema])
-async def get_projects_handle(skip: int = 0, limit: int = 5) -> List[ProjectSchema]:
-    return await get_projects(skip, limit)
+async def get_projects_handle(
+    projects: List[ProjectSchema] = Depends(get_projects),
+) -> List[ProjectSchema]:
+    return projects
 
 
 @router.get("/avg_salary", response_model=List[Dict[str, Any]])
-async def get_projects_avg_salary() -> List[Dict[str, Any]]:
-    return await project_avg_salary()
+async def get_projects_avg_salary(
+    data: Annotated[List, Depends(project_avg_salary)],
+) -> List[Dict[str, Any]]:
+    return data
 
 
 @router.get("/{project_id}", response_model=ProjectRelSchema)
-async def get_project_handle(project_id: int) -> ProjectRelSchema:
-    res = await get_project(project_id)
-    if res is not None:
-        return res
-    else:
-        raise HTTPException(
-            status_code=404, detail=f"There's no project with id:{project_id}"
-        )
-
-
-@router.post("/", response_model=ProjectSchema)
-async def create_project_handle(new_project_data: ProjectBase) -> ProjectSchema:
-    project = await create_project(new_project_data)
+async def get_project_handle(
+    project: Annotated[ProjectRelSchema, Depends(get_project)],
+) -> ProjectRelSchema:
     return project
 
 
-@router.delete("/", response_model=ProjectSchema)
-async def delete_project_handle(project_id: int) -> ProjectSchema:
-    return await delete_project(project_id=project_id)
+@router.post("/", response_model=List[ProjectSchema])
+async def create_projects_handle(
+    new_projects: Annotated[List[ProjectSchema], Depends(create_projects)],
+) -> List[ProjectSchema]:
+    return new_projects
+
+
+@router.delete("/", response_model=List[ProjectSchema])
+async def delete_projects_handle(
+    deleted_projects: Annotated[List[ProjectSchema], Depends(delete_projects)],
+) -> List[ProjectSchema]:
+    return deleted_projects
 
 
 @router.put("/{project_id}", response_model=ProjectSchema)
 async def replace_project_handle(
-    project_id: int, update_data: UpdateProjectSchema
+    updated_project: Annotated[ProjectSchema, Depends(update_project)],
 ) -> ProjectSchema:
-    return await update_project(project_id, update_data)
+    return updated_project
 
 
 @router.patch("/{project_id}", response_model=ProjectSchema)
 async def update_project_handle(
-    project_id: int, update_data: UpdateProjectSchema
+    updated_project: Annotated[ProjectSchema, Depends(update_project)],
 ) -> ProjectSchema:
-    return await update_project(project_id, update_data, True)
+    return updated_project

@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, BeforeValidator
 from datetime import datetime
 from typing import Optional, List, Annotated
-import re
 import enum
+
+import re
 
 DateString = Annotated[str, BeforeValidator(lambda x: validate_date_format(x))]
 
@@ -10,7 +11,6 @@ DateString = Annotated[str, BeforeValidator(lambda x: validate_date_format(x))]
 def validate_date_format(date_str: str) -> str:
     if not isinstance(date_str, str):
         raise ValueError("Date must be string")
-
     pattern = r"^\d{4}-\d{2}-\d{2}$"
     if not re.match(pattern=pattern, string=date_str):
         raise ValueError("String must be formatted like YYYY-MM-DD")
@@ -23,7 +23,7 @@ def validate_date_format(date_str: str) -> str:
     return date_str
 
 
-class Priority(enum.Enum):
+class Priority(enum.IntEnum):
     high_priority = 3
     mid_priority = 2
     low_priority = 1
@@ -31,8 +31,12 @@ class Priority(enum.Enum):
 
 class TaskBase(BaseModel):
     task_description: str = Field(..., description="Information about task")
-    start_date: DateString = Field(..., description="Date when task started")
-    end_date: DateString = Field(..., description="Date when task ended or will end")
+    start_date: DateString = Field(
+        default="2000-01-01", description="Date when task started"
+    )
+    end_date: DateString = Field(
+        default="2000-01-01", description="Date when task ended or will end"
+    )
     priority: Priority = Field(
         default=Priority.low_priority, description="Task priority"
     )
@@ -65,8 +69,12 @@ class EmployeeSchema(EmployeeBase):
 
 class ProjectBase(BaseModel):
     project_name: str = Field(..., description="Name of the project")
-    start_date: DateString = Field(..., description="date when project started")
-    end_date: DateString = Field(..., description="date when project ended")
+    start_date: DateString = Field(
+        default="2000-01-01", description="date when project started"
+    )
+    end_date: DateString = Field(
+        default="2000-01-01", description="date when project ended"
+    )
     is_completed: bool = Field(default=False, description="status of completion")
 
     class Config:
@@ -90,6 +98,13 @@ class NoteBase(BaseModel):
 
 class NoteSchema(NoteBase):
     id: int = Field(..., description="Note unique identifier")
+
+
+class TaskEmployeeSchema(BaseModel):
+    task_id: int = Field(..., gt=0, description="ID of the task that employee works on")
+    employee_id: int = Field(
+        ..., gt=0, description="ID of the employee that works on the task"
+    )
 
 
 # Relations
