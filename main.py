@@ -6,8 +6,6 @@ from typing import List, Dict
 from routers.db_conn.queries_package.data_handler import get_global_data, reset_data
 from pydantic_schemas import UnexpectedFileFormatExcpetion
 
-# FIXME: check if you giningore few lines of code in a specific file
-# if yes then add default values for user like in original but without db_name
 app = FastAPI()
 
 app.include_router(employee.router)
