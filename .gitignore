@@ -11,9 +11,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env
 
 # Mypy
 .mypy_cache/
+
+#ruff
+.ruff_cache
 
 # IDE
 .vscode/

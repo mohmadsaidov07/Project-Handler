@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from typing import List
 
 
-from schemas import (
+from pydantic_schemas import (
     EmployeeSchema,
     EmployeeRelSchema,
 )

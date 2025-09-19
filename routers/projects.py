@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List, Dict, Any, Annotated
 
-from schemas import (
+from pydantic_schemas import (
     ProjectSchema,
     ProjectRelSchema,
 )

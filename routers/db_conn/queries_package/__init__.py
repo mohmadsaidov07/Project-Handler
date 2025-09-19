@@ -2,7 +2,7 @@ from sqlalchemy import select, func, Integer
 from sqlalchemy.orm import selectinload, joinedload, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db_models import Task, Note, Employee, Project, TaskEmployees
-from schemas import (
+from pydantic_schemas import (
     TaskBase,
     TaskSchema,
     EmployeeBase,
@@ -23,11 +23,9 @@ from schemas import (
 )
 from ..db_setup import async_session_factory, async_engine, Base
 from typing import List, Any, Dict, Annotated
-from fastapi import HTTPException, Depends, Request
+from fastapi import HTTPException, Depends, Request, UploadFile
 import asyncio
 from pydantic import Field, BaseModel
-import json
-import aiofiles
 
 
 async def get_session():
@@ -45,7 +43,7 @@ class PaginationParamsGetMany(BaseModel):
 PaginationDep_get = Annotated[PaginationParamsGetMany, Depends()]
 
 __all__ = [
-    # schemas
+    # pydantic_schemas
     "TaskBase",
     "TaskSchema",
     "EmployeeBase",
@@ -86,11 +84,10 @@ __all__ = [
     "Any",
     "Dict",
     "HTTPException",
+    "UploadFile",
     "Request",
     "Depends",
     "asyncio",
-    "json",
-    "aiofiles",
     "Annotated",
     # My func's
     "get_session",

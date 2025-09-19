@@ -121,52 +121,6 @@ async def update_employee(
     return employee_validated
 
 
-async def reset_data(session: AsyncSession = Depends(get_session)) -> str:
-    # Dropping and then creating tables
-    async_engine.echo = False
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    async_engine.echo = True
-
-    # Inserting Data in Json file
-    # parent_dir = Path(__file__).parent.parent
-    # path = parent_dir / Path("test_data.json")
-    async with aiofiles.open("test_data.json") as f:
-        content = await f.read()
-        data = json.loads(content)
-    async_engine.echo = False
-    session.add_all(
-        [
-            Project(**ProjectBase(**project).model_dump())
-            for project in data.get("projects", [])
-        ]
-    )
-    session.add_all(
-        [Task(**TaskBase(**task).model_dump()) for task in data.get("tasks", [])]
-    )
-    session.add_all(
-        [
-            Employee(**EmployeeBase(**employee).model_dump())
-            for employee in data.get("employees", [])
-        ]
-    )
-    await session.flush()
-    session.add_all(
-        [Note(**NoteBase(**note).model_dump()) for note in data.get("notes", [])]
-    )
-    session.add_all(
-        [
-            TaskEmployees(**TaskEmployeeSchema(**tasks_employee).model_dump())
-            for tasks_employee in data.get("tasks_employees", [])
-        ]
-    )
-    await session.commit()
-    async_engine.echo = True
-
-    return "Data resetted to default successfully"
-
-
 # async def main():
 #     # await create_tables()
 #     # await insert_data()

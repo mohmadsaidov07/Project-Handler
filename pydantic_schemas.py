@@ -158,3 +158,11 @@ class UpdateNoteSchema(BaseModel):
     note_info: Optional[str] = None
     employee_id: Optional[int] = None
     task_id: Optional[int] = None
+
+
+# Excpetion
+
+
+class UnexpectedFileFormatExcpetion(Exception):
+    def __init__(self, filetype: str) -> None:
+        self.filetype = filetype
