@@ -12,15 +12,15 @@ active_path = None
 
 async def recreate_tables() -> None:
     # Dropping and then creating tables
-    async_engine.echo = False
+    # async_engine.echo = False
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-    async_engine.echo = True
+    # async_engine.echo = True
 
 
 async def add_data_into_db(data: Dict[str, List], session: AsyncSession) -> None:
-    async_engine.echo = False
+    # async_engine.echo = False
     session.add_all(
         [
             Project(**ProjectBase(**project).model_dump())
@@ -47,7 +47,7 @@ async def add_data_into_db(data: Dict[str, List], session: AsyncSession) -> None
         ]
     )
     await session.commit()
-    async_engine.echo = True
+    # async_engine.echo = True
 
 
 async def get_global_data(
@@ -55,6 +55,7 @@ async def get_global_data(
 ) -> Dict[str, List]:
     global active_data
     global active_path
+
     if file is not None and not isinstance(file, str):
         user_file_extension: str = file.filename[file.filename.index(".") :]  # type: ignore
         if user_file_extension == ".json":
@@ -109,5 +110,4 @@ async def reset_data(session: AsyncSession = Depends(get_session)) -> Dict:
 
     return active_data
 
-
-# {"message": "Data resetted to default successfully", "data": active_data}
+    # return {"message": "Data resetted to default successfully", "data": active_data}
