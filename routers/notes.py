@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends
 from typing import List
 
-from pydantic_schemas import NoteSchema, NoteRelSchema
+from models.note_models import NoteSchema
+
+from models.relation_models import NoteRelSchema
 
 
-from routers.db_conn.queries_package.note_queries import (
+from database.queries.note_queries import (
     get_notes,
     get_note,
     create_notes,

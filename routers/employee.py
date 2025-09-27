@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends
 from typing import List
 
 
-from pydantic_schemas import (
+from models.employee_models import (
     EmployeeSchema,
-    EmployeeRelSchema,
 )
 
-from routers.db_conn.queries_package.employee_queries import (
+from models.relation_models import EmployeeRelSchema
+
+from database.queries.employee_queries import (
     get_employees,
     get_employee,
     create_employees,

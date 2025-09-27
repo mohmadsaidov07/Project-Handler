@@ -1,6 +1,6 @@
 import json
 import aiofiles
-from pydantic_schemas import UnexpectedFileFormatExcpetion
+from models import UnexpectedFileFormatExcpetion
 from . import *
 
 default_data_path = "test_data.json"

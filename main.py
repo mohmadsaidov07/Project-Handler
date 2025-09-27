@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from routers import employee, notes, projects, tasks
 import uvicorn
 from typing import List, Dict
-from routers.db_conn.queries_package.data_handler import get_global_data, reset_data
-from pydantic_schemas import UnexpectedFileFormatExcpetion
+from database.queries.data_handler import get_global_data, reset_data
+from models import UnexpectedFileFormatExcpetion
 
 app = FastAPI()
 
@@ -19,10 +19,10 @@ async def read_root() -> dict[str, str]:
     return {"message": "Hello world"}
 
 
-@app.patch("/", response_model=Dict[str, List])
+@app.patch("/", response_model=str)
 async def reset_data_to_default(
     data_resetter: str = Depends(reset_data),
-) -> Dict[str, List]:
+) -> str:
     return data_resetter
 
 

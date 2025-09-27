@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends
 from typing import List, Dict, Any, Annotated
 
-from pydantic_schemas import (
+from models.project_models import (
     ProjectSchema,
-    ProjectRelSchema,
 )
 
-from routers.db_conn.queries_package.project_queries import (
+from models.relation_models import ProjectRelSchema
+
+
+from database.queries.project_queries import (
     get_projects,
     get_project,
     create_projects,

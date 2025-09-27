@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from typing import List
 
-from pydantic_schemas import TaskSchema, TaskRelSchema
+from models.task_models import TaskSchema
+from models.relation_models import TaskRelSchema
 
-from routers.db_conn.queries_package.task_queries import (
+from database.queries.task_queries import (
     get_tasks,
     get_task,
     create_tasks,
