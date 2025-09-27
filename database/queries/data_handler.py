@@ -12,6 +12,7 @@ active_path = None
 
 async def recreate_tables() -> None:
     # Dropping and then creating tables
+
     # async_engine.echo = False
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
