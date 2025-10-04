@@ -52,7 +52,8 @@ async def add_data_into_db(data: Dict[str, List], session: AsyncSession) -> None
 
 
 async def get_global_data(
-    file: UploadFile | str | None = "", session: AsyncSession = Depends(get_session)
+    session: Annotated[AsyncSession, Depends(get_session)],
+    file: UploadFile | str | None = "",
 ) -> Dict[str, List]:
     global active_data
     global active_path
@@ -97,7 +98,7 @@ async def get_data():
     return active_data
 
 
-async def reset_data(session: AsyncSession = Depends(get_session)) -> Dict:
+async def reset_data(session: Annotated[AsyncSession, Depends(get_session)]) -> Dict:
     global active_data
     global active_path
 
